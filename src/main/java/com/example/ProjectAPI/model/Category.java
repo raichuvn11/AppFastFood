@@ -39,5 +39,11 @@ public class Category implements Serializable {
     public void setCategoryDescription(String categoryDescription) {
         this.categoryDescription = categoryDescription;
     }
+    public List<Product> getProductList() {
+        return productList;
+    }
+    public void setProductList(List<Product> productList) {
+        this.productList = productList;
+    }
 
 }
