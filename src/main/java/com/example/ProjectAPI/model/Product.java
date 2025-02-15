@@ -3,7 +3,7 @@ package com.example.ProjectAPI.model;
 import jakarta.persistence.*;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Entity
 public class Product implements Serializable {
@@ -15,16 +15,18 @@ public class Product implements Serializable {
     private String productDescription;
     private String productImage;
     private int productQuantity;
-    private Date createDate;
+    private int quantitySold;
+    private LocalDateTime createDate;
     @ManyToOne
     @JoinColumn(name = "categoryId")
     private Category category;
-    public Product(String productName, double productPrice, String productDescription, String productImage, int productQuantity, Date createDate) {
+    public Product(String productName, double productPrice, String productDescription, String productImage, int productQuantity, int quantitySold, LocalDateTime createDate) {
         this.productName = productName;
         this.productPrice = productPrice;
         this.productDescription = productDescription;
         this.productImage = productImage;
         this.productQuantity = productQuantity;
+        this.quantitySold = quantitySold;
         this.createDate = createDate;
     }
     public Product() {
@@ -66,10 +68,16 @@ public class Product implements Serializable {
     public void setProductQuantity(int productQuantity) {
         this.productQuantity = productQuantity;
     }
-    public Date getCreateDate() {
+    public int getQuantitySold() {
+        return quantitySold;
+    }
+    public void setQuantitySold(int quantitySold) {
+        this.quantitySold = quantitySold;
+    }
+    public LocalDateTime getCreateDate() {
         return createDate;
     }
-    public void setCreateDate(Date createDate) {
+    public void setCreateDate(LocalDateTime createDate) {
         this.createDate = createDate;
     }
     public Category getCategory() {
@@ -79,7 +87,10 @@ public class Product implements Serializable {
         this.category = category;
     }
 
-
+    @PrePersist
+    protected void onCreate() {
+        this.createDate = LocalDateTime.now();
+    }
 
 
 }

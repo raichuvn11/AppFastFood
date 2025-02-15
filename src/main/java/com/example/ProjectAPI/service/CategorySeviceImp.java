@@ -20,10 +20,17 @@ public class CategorySeviceImp implements ICategoryService{
     }
 
     @Override
-    public List<Product> getProductsByCategoryId(int categoryId){
-        Optional<Category> category = categoryRepository.findById(categoryId);
-        return category.map(Category::getProductList).orElseThrow(() ->
-                new RuntimeException("Không tìm thấy id: " + categoryId)
-        );
+    public Optional<Category> getCategoryByName(String categoryName) {
+        return categoryRepository.findByCategoryName(categoryName);
+    }
+
+    @Override
+    public <S extends Category> S save(S entity) {
+        return categoryRepository.save(entity);
+    }
+
+    @Override
+    public Optional<Category> getCategoryById(int categoryId) {
+        return categoryRepository.findById(categoryId);
     }
 }
