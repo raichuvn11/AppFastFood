@@ -4,8 +4,11 @@ import com.example.ProjectAPI.model.Category;
 import com.example.ProjectAPI.model.Product;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ICategoryService {
-    public List<Category> getAllCategories();
-    public List<Product> getProductsByCategoryId(int categoryId);
+    List<Category> getAllCategories();
+    Optional<Category> getCategoryByName(String categoryName);
+    Optional<Category> getCategoryById(int categoryId);
+    <S extends Category> S save(S entity);
 }

@@ -9,7 +9,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CategoryRepository extends JpaRepository<Category, Integer> {
-    List<Category> findByCategoryNameContaining(String name);
-    Page<Category> findByCategoryNameContaining(String name, Pageable pageable);
-    Optional<Category> findByCategoryName(String name);
+
+    Optional<Category> findByCategoryName(String categoryName);
+    List<Category> findByCategoryNameContaining(String categoryName);
+    Page<Category> findByCategoryNameContaining(String categoryName, Pageable pageable);
+
 }
