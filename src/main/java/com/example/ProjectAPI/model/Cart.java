@@ -1,6 +1,5 @@
 package com.example.ProjectAPI.model;
 
-import com.example.ProjectAPI.model.Order;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,18 +12,16 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class User implements Serializable {
+public class Cart implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String username;
-    private String phone;
-    private String email;
-    private String password;
-    private String address;
+
+    @OneToOne
+    private User user;
 
     @OneToMany(cascade = CascadeType.ALL)
     @ToString.Exclude
-    private List<Order> orders;
+    private List<MenuItem> items;
 }
 

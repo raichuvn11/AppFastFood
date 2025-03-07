@@ -1,7 +1,7 @@
 package com.example.ProjectAPI.service;
 
 import com.example.ProjectAPI.model.Category;
-import com.example.ProjectAPI.model.Product;
+import com.example.ProjectAPI.model.CategoryType;
 import com.example.ProjectAPI.repository.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -10,7 +10,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class CategorySeviceImp implements ICategoryService{
+public class CategoryServiceImp implements ICategoryService{
+
     @Autowired
     CategoryRepository categoryRepository;
 
@@ -20,8 +21,8 @@ public class CategorySeviceImp implements ICategoryService{
     }
 
     @Override
-    public Optional<Category> getCategoryByName(String categoryName) {
-        return categoryRepository.findByCategoryName(categoryName);
+    public Optional<Category> getCategoryByType(CategoryType categoryName) {
+        return categoryRepository.findByType(categoryName);
     }
 
     @Override
