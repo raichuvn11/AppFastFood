@@ -1,9 +1,8 @@
 package com.example.ProjectAPI.controller;
 
 import com.example.ProjectAPI.model.Category;
-import com.example.ProjectAPI.service.CategorySeviceImp;
-import com.example.ProjectAPI.service.ICategoryService;
-import org.apache.catalina.connector.Response;
+import com.example.ProjectAPI.model.CategoryType;
+import com.example.ProjectAPI.service.CategoryServiceImp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +17,7 @@ import java.util.Optional;
 public class CategoryController {
 
     @Autowired
-    private CategorySeviceImp categoryService;
+    private CategoryServiceImp categoryService;
 
     @GetMapping()
     public ResponseEntity<?> getAllCategory() {
@@ -29,20 +28,22 @@ public class CategoryController {
         return ResponseEntity.ok(categoryList);
     }
 
-    @PostMapping( "/add-category")
-    public ResponseEntity<?> addCategory(@Validated @RequestParam("categoryName")
-                                         String categoryName) {
-        Optional<Category> optCategory =
-                categoryService.getCategoryByName(categoryName);
+    @PostMapping("/add-category")
+    public ResponseEntity<?> addCategory(@Validated @RequestParam("type") String type) {
+        try {
+            CategoryType categoryType = CategoryType.valueOf(type);
 
-        if (optCategory.isPresent()) {
-            return
-                    ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Category đã tồn tại trong hệ thống");//return new ResponseEntity<Response>(new Response(false, "Loại sản phẩm này đã tồn tại trong hệ thống", optCategory.get()), HttpStatus.BAD_REQUEST);
-        } else {
-            Category category = new Category();
-            category.setCategoryName(categoryName);
-            categoryService.save(category);
-            return ResponseEntity.ok().body(category);
+            Optional<Category> optCategory = categoryService.getCategoryByType(categoryType);
+            if (optCategory.isPresent()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Category đã tồn tại trong hệ thống");
+            } else {
+                Category category = new Category();
+                category.setType(categoryType);
+                categoryService.save(category);
+                return ResponseEntity.ok().body(category);
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("CategoryType không hợp lệ.");
         }
     }
 }

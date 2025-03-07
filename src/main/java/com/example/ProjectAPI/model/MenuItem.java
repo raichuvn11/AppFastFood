@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.io.Serializable;
-import java.util.List;
+import java.time.LocalDate;
 
 @Entity
 @Getter
@@ -12,16 +12,17 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Category implements Serializable {
+public class MenuItem implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String name;
+    private double price;
+    private String description;
+    private LocalDate createDate;
+    private int soldQuantity;
 
-    @Enumerated(EnumType.STRING)
-    private CategoryType type;
-
-    @OneToMany(cascade = CascadeType.ALL)
-    @ToString.Exclude
-    private List<MenuItem> menuItems;
+    @ManyToOne
+    private Category category;
 }
 
