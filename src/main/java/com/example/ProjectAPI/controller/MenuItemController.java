@@ -51,6 +51,7 @@ public class MenuItemController {
                         item.getPrice(),
                         item.getSoldQuantity(),
                         item.getCreateDate(),
+                        item.getImgMenuItem(),
                         item.getCategory().getId()
                 ))
                 .collect(Collectors.toList());
@@ -59,6 +60,7 @@ public class MenuItemController {
     }
 
 
+    @CrossOrigin(origins = "*")
     @GetMapping("/latest-created")
     public ResponseEntity<List<MenuItemDTO>> getLastedCreatedMenuItems() {
         LocalDate daysAgo = LocalDate.now().minusDays(7);
@@ -76,6 +78,7 @@ public class MenuItemController {
                         item.getPrice(),
                         item.getSoldQuantity(),
                         item.getCreateDate(),
+                        item.getImgMenuItem(),
                         item.getCategory().getId()
                 ))
                 .collect(Collectors.toList());
