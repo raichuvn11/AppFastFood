@@ -22,6 +22,7 @@ public class MenuItem implements Serializable {
     private LocalDate createDate;
     private int soldQuantity;
 
+    private String imgMenuItem;
     @ManyToOne
     private Category category;
 }

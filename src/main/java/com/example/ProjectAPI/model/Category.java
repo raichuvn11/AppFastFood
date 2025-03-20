@@ -20,6 +20,8 @@ public class Category implements Serializable {
     @Enumerated(EnumType.STRING)
     private CategoryType type;
 
+    private String imgCategory;
+
     @OneToMany(cascade = CascadeType.ALL)
     @ToString.Exclude
     private List<MenuItem> menuItems;
