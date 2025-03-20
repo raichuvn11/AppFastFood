@@ -15,6 +15,7 @@ public class MenuItemDTO {
     private double price;
     private int soldQuantity;
     private LocalDate createDate;
+    private String imgMenuItem;
     private Long categoryId;
 }
 
