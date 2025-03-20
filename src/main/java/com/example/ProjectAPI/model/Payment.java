@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.io.Serializable;
-import java.util.List;
 
 @Entity
 @Getter
@@ -12,18 +11,14 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Category implements Serializable {
+public class Payment implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String paymentMethod;
+    private String status;
 
-    @Enumerated(EnumType.STRING)
-    private CategoryType type;
-
-    private String imgCategory;
-
-    @OneToMany(cascade = CascadeType.ALL)
-    @ToString.Exclude
-    private List<MenuItem> menuItems;
+    @OneToOne
+    private Order order;
 }
 
