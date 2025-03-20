@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
+@Table(name = "orders")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,7 +26,7 @@ public class Order implements Serializable {
     @ManyToOne
     private User user;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     @ToString.Exclude
     private List<OrderItem> items;
 }

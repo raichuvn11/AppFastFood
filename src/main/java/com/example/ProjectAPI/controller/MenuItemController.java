@@ -1,5 +1,6 @@
 package com.example.ProjectAPI.controller;
 
+import com.example.ProjectAPI.DTO.MenuItemDTO;
 import com.example.ProjectAPI.model.Category;
 import com.example.ProjectAPI.model.MenuItem;
 import com.example.ProjectAPI.service.CategoryServiceImp;
@@ -10,8 +11,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/item")
@@ -32,38 +36,74 @@ public class MenuItemController {
     }
 
     @GetMapping("/top10-bestselling")
-    public ResponseEntity<List<MenuItem>> getTop10BestSellingMenuItems() {
-        List<MenuItem> MenuItemList = MenuItemService.getTop10BestSellingMenuItems();
-        if (MenuItemList.isEmpty()) {
+    public ResponseEntity<List<MenuItemDTO>> getTop10BestSellingMenuItems() {
+        List<MenuItem> menuItemList = MenuItemService.getTop10BestSellingMenuItems();
+
+        if (menuItemList.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
-        return ResponseEntity.ok(MenuItemList);
+
+        // Chuyển đổi từ MenuItem sang MenuItemDTO
+        List<MenuItemDTO> menuItemDTOList = menuItemList.stream()
+                .map(item -> new MenuItemDTO(
+                        item.getId(),
+                        item.getName(),
+                        item.getPrice(),
+                        item.getSoldQuantity(),
+                        item.getCreateDate(),
+                        item.getCategory().getId()
+                ))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(menuItemDTOList);
     }
 
+
     @GetMapping("/latest-created")
-    public ResponseEntity<List<MenuItem>> getLastedCreatedMenuItems() {
+    public ResponseEntity<List<MenuItemDTO>> getLastedCreatedMenuItems() {
         LocalDate daysAgo = LocalDate.now().minusDays(7);
-        List<MenuItem> MenuItemList = MenuItemService.getTop10LatestCreatedMenuItems(daysAgo);
-        System.out.println(MenuItemList);
-        if (MenuItemList.isEmpty()) {
+        List<MenuItem> menuItemList = MenuItemService.getTop10LatestCreatedMenuItems(daysAgo);
+        System.out.println(menuItemList);
+
+        if (menuItemList.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
-        return ResponseEntity.ok(MenuItemList);
+
+        List<MenuItemDTO> menuItemDTOList = menuItemList.stream()
+                .map(item -> new MenuItemDTO(
+                        item.getId(),
+                        item.getName(),
+                        item.getPrice(),
+                        item.getSoldQuantity(),
+                        item.getCreateDate(),
+                        item.getCategory().getId()
+                ))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(menuItemDTOList);
     }
 
     @PostMapping("/add-menu-item")
-    public ResponseEntity<?> createMenuItem(@RequestParam("name") String name, @RequestParam("price") double price, @RequestParam("categoryId") int categoryId) {
+    public ResponseEntity<?> createMenuItem(@RequestParam("name") String name, @RequestParam("price") double price, @RequestParam("categoryId") int categoryId, @RequestParam("imgMenuItem") String imgMenuItem) {
         Optional<Category> category = categoryServiceImp.getCategoryById(categoryId);
         if(category.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Category không tồn tại");
         }
-        MenuItem MenuItem = new MenuItem();
-        MenuItem.setName(name);
-        MenuItem.setPrice(price);
-        MenuItem.setCreateDate(LocalDate.now());
-        MenuItem.setCategory(category.get());
-        MenuItemService.save(MenuItem);
+        MenuItem menuItem = new MenuItem();
+        menuItem.setName(name);
+        menuItem.setPrice(price);
+        menuItem.setImgMenuItem(imgMenuItem);
+        menuItem.setCreateDate(LocalDate.now());
+        menuItem.setCategory(category.get());
+        MenuItemService.save(menuItem);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(MenuItem);
+        // Trả về response chứa thông báo thành công và thông tin
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Thêm món ăn thành công");
+        response.put("name", menuItem.getName());
+        response.put("price", menuItem.getPrice());
+        response.put("categoryId", menuItem.getCategory().getId());
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

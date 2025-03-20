@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Getter
@@ -25,5 +26,7 @@ public class MenuItem implements Serializable {
     private String imgMenuItem;
     @ManyToOne
     private Category category;
+    @ManyToMany(mappedBy = "items")
+    private List<Cart> carts;
 }
 
