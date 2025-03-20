@@ -34,7 +34,7 @@ public class UserService {
         }
 
         // Tạo OTP
-        String otp = String.valueOf((int) (Math.random() * 9000) + 1000); // 4 chữ số OTP
+        String otp = String.valueOf((int) (Math.random() * 900000) + 100000); // 6 chữ số OTP
         OtpVerification otpVerification = new OtpVerification();
         otpVerification.setEmail(email);
         otpVerification.setOtp(otp);
