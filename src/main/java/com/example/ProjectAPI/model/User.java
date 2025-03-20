@@ -23,7 +23,7 @@ public class User implements Serializable {
     private String password;
     private String address;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @ToString.Exclude
     private List<Order> orders;
 }
