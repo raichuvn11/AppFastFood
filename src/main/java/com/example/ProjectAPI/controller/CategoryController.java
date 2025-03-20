@@ -29,7 +29,7 @@ public class CategoryController {
     }
 
     @PostMapping("/add-category")
-    public ResponseEntity<?> addCategory(@Validated @RequestParam("type") String type) {
+    public ResponseEntity<?> addCategory(@Validated @RequestParam("type") String type, @RequestParam("imgCategory") String imgCategory) {
         try {
             CategoryType categoryType = CategoryType.valueOf(type);
 
@@ -39,6 +39,7 @@ public class CategoryController {
             } else {
                 Category category = new Category();
                 category.setType(categoryType);
+                category.setImgCategory(imgCategory);
                 categoryService.save(category);
                 return ResponseEntity.ok().body(category);
             }
