@@ -22,7 +22,7 @@ public class Category implements Serializable {
 
     private String imgCategory;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     @ToString.Exclude
     private List<MenuItem> menuItems;
 }

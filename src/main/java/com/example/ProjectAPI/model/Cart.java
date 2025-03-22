@@ -20,7 +20,12 @@ public class Cart implements Serializable {
     @OneToOne
     private User user;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @ManyToMany
+    @JoinTable(
+            name = "cart_items",
+            joinColumns = @JoinColumn(name = "cart_id"),
+            inverseJoinColumns = @JoinColumn(name = "menu_item_id")
+    )
     @ToString.Exclude
     private List<MenuItem> items;
 }
