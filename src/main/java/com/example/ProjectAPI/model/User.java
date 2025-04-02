@@ -22,6 +22,8 @@ public class User implements Serializable {
     private String email;
     private String password;
     private String address;
+    private String avatar;
+    private String deviceToken;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @ToString.Exclude
