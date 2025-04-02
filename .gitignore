@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Google services
+src/main/resources/google-services.json
