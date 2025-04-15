@@ -15,10 +15,11 @@ import java.util.List;
 public class OrderDTO {
     private Long userId;
     private String orderAddress;
-    //@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate orderTime;
+    private String orderTime;
     private String orderStatus;
     private double orderTotal;
     @JsonProperty("orderItems")
     private List<OrderItemDTO> orderItemDTOS;
+    private int rating;
+    private String review;
 }

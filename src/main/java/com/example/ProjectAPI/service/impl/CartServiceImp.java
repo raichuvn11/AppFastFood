@@ -1,17 +1,15 @@
-package com.example.ProjectAPI.service;
+package com.example.ProjectAPI.service.impl;
 
 import com.example.ProjectAPI.DTO.CartItemDTO;
-import com.example.ProjectAPI.DTO.MenuItemDTO;
 import com.example.ProjectAPI.model.Cart;
 import com.example.ProjectAPI.model.MenuItem;
 import com.example.ProjectAPI.repository.CartRepository;
+import com.example.ProjectAPI.service.intf.ICartService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class CartServiceImp implements ICartService {

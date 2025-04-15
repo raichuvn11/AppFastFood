@@ -2,9 +2,9 @@ package com.example.ProjectAPI.controller;
 
 import com.example.ProjectAPI.DTO.OrderDTO;
 import com.example.ProjectAPI.model.User;
-import com.example.ProjectAPI.repository.UserRepository;
-import com.example.ProjectAPI.service.NotificationService;
-import com.example.ProjectAPI.service.OrderServiceIml;
+import com.example.ProjectAPI.service.impl.CouponServiceImp;
+import com.example.ProjectAPI.service.impl.NotificationService;
+import com.example.ProjectAPI.service.impl.OrderServiceImp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,7 +14,10 @@ import org.springframework.web.bind.annotation.*;
 public class OrderController {
 
     @Autowired
-    private OrderServiceIml orderService;
+    private OrderServiceImp orderService;
+
+    @Autowired
+    private CouponServiceImp couponService;
 
     @Autowired
     private NotificationService notificationService;
@@ -25,13 +28,13 @@ public class OrderController {
     }
 
     @PutMapping("/update")
-    public ResponseEntity<?> updateOrder(@RequestParam Long orderId, @RequestParam String orderStatus) {
+    public ResponseEntity<?> updateOrder(@RequestParam Long orderId, @RequestParam String status, @RequestParam int rating, @RequestParam String review) {
         //
         User user = orderService.findUserByOrderId(orderId);
-        if (user != null && user.getDeviceToken() != null) {
-            notificationService.sendPushNotification(user.getDeviceToken(), orderId);
+        if (user != null && user.getDeviceToken() != null && review.isEmpty()) {
+            notificationService.sendPushNotification(user.getDeviceToken(), orderId, status);
         }
-        return orderService.updateOrder(orderId, orderStatus);
+        return orderService.updateOrder(orderId, status, rating, review);
     }
 
     @GetMapping("")
@@ -42,5 +45,15 @@ public class OrderController {
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteOrder(@RequestParam Long orderId) {
         return orderService.deleteOrder(orderId);
+    }
+
+    @GetMapping("/list-status")
+    public ResponseEntity<?> getOrdersByStatus(@RequestParam String status, @RequestParam Long userId) {
+        return orderService.getOrdersByStatus(status, userId);
+    }
+
+    @GetMapping("/apply-code")
+    public ResponseEntity<?> applyCouponCode(@RequestParam String code) {
+        return couponService.applyCoupon(code);
     }
 }

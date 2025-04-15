@@ -1,8 +1,8 @@
-package com.example.ProjectAPI.service;
+package com.example.ProjectAPI.service.impl;
 
 import com.example.ProjectAPI.model.MenuItem;
-import com.example.ProjectAPI.repository.CategoryRepository;
 import com.example.ProjectAPI.repository.MenuItemRepository;
+import com.example.ProjectAPI.service.intf.IMenuItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

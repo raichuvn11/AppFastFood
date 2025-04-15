@@ -1,26 +1,27 @@
-package com.example.ProjectAPI.service;
+package com.example.ProjectAPI.service.impl;
 
 import com.example.ProjectAPI.DTO.OrderDTO;
 import com.example.ProjectAPI.DTO.OrderItemDTO;
+import com.example.ProjectAPI.DTO.OrderStatusDTO;
 import com.example.ProjectAPI.model.MenuItem;
 import com.example.ProjectAPI.model.Order;
 import com.example.ProjectAPI.model.OrderItem;
 import com.example.ProjectAPI.model.User;
-import com.example.ProjectAPI.repository.CartRepository;
 import com.example.ProjectAPI.repository.MenuItemRepository;
 import com.example.ProjectAPI.repository.OrderRepository;
 import com.example.ProjectAPI.repository.UserRepository;
+import com.example.ProjectAPI.service.intf.IOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import javax.swing.text.html.Option;
-import java.util.ArrayList;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
 @Service
-public class OrderServiceIml implements IOrderService{
+public class OrderServiceImp implements IOrderService {
 
     @Autowired
     private OrderRepository orderRepository;
@@ -52,10 +53,9 @@ public class OrderServiceIml implements IOrderService{
             order.setUser(userOptional.get());
             order.setItems(orderItemList);
             order.setOrderAddress(orderDTO.getOrderAddress());
-            order.setOrderTime(orderDTO.getOrderTime());
             order.setStatus(orderDTO.getOrderStatus());
             order.setOrderTotal(orderDTO.getOrderTotal());
-
+            order.setOrderTime(LocalDate.now());
             orderRepository.save(order);
             return ResponseEntity.ok(order.getId());
         }
@@ -63,11 +63,14 @@ public class OrderServiceIml implements IOrderService{
     }
 
     @Override
-    public ResponseEntity<?> updateOrder(Long orderId, String orderStatus) {
+    public ResponseEntity<?> updateOrder(Long orderId, String orderStatus, int rating, String review) {
         Optional<Order> orderOptional = orderRepository.findById(orderId);
         if (orderOptional.isPresent()) {
             Order order = orderOptional.get();
             order.setStatus(orderStatus);
+            order.setOrderTime(LocalDate.now());    // thời gian tạo order
+            order.setRating(rating);
+            order.setReview(review);
             orderRepository.save(order);
             return ResponseEntity.ok(order.getStatus());
         }
@@ -99,9 +102,11 @@ public class OrderServiceIml implements IOrderService{
             OrderDTO orderDTO = new OrderDTO();
             orderDTO.setUserId(order.getUser().getId());
             orderDTO.setOrderAddress(order.getOrderAddress());
-            orderDTO.setOrderTime(order.getOrderTime());
+            orderDTO.setOrderTime(DateTimeFormatter.ofPattern("dd-MM-yyyy").format(order.getOrderTime()));
             orderDTO.setOrderStatus(order.getStatus());
             orderDTO.setOrderTotal(order.getOrderTotal());
+            orderDTO.setRating(order.getRating());
+            orderDTO.setReview(order.getReview());
 
             List<OrderItemDTO> orderItemDTOList = order.getItems().stream().map(orderItem -> {
                 OrderItemDTO orderItemDTO = new OrderItemDTO();
@@ -119,6 +124,22 @@ public class OrderServiceIml implements IOrderService{
         return ResponseEntity.status(404).body("Order not found!");
     }
 
+    @Override
+    public ResponseEntity<?> getOrdersByStatus(String status, Long userId) {
+        List<Order> orderList = orderRepository.findByStatusAndUserIdOrderByOrderTimeDesc(status, userId);
+        if (orderList.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        List<OrderStatusDTO> orderStatusDTOList = orderList.stream().map(order -> {
+            OrderStatusDTO orderStatusDTO = new OrderStatusDTO();
+            orderStatusDTO.setId(order.getId());
+            orderStatusDTO.setStatus(order.getStatus());
+            orderStatusDTO.setDate(DateTimeFormatter.ofPattern("dd-MM-yyyy").format(order.getOrderTime()));
+            orderStatusDTO.setTotal(order.getOrderTotal());
+            return orderStatusDTO;
+        }).toList();
 
+        return ResponseEntity.ok(orderStatusDTOList);
+    }
 
 }

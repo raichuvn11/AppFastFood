@@ -175,19 +175,26 @@ public class UserService {
 
     // update user profile
     public ResponseEntity<?> updateUserProfile(UserDTO userDTO, MultipartFile avatarFile) {
-        System.out.println("Received userDTO: " + userDTO);
-        System.out.println("Received avatarFile: " + (avatarFile != null ? avatarFile.getOriginalFilename() : "null"));
-        String UPLOAD_DIR = System.getProperty("user.dir") + "/uploads/avatar";
 
+        String UPLOAD_DIR = System.getProperty("user.dir") + "/uploads/avatar";
 
         Optional<User> userOptional = userRepository.findById(userDTO.getId().toString());
 
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-            user.setUsername(userDTO.getUsername());
-            user.setEmail(userDTO.getEmail());
-            user.setPhone(userDTO.getPhone());
-            user.setAddress(userDTO.getAddress());
+
+            if (!userDTO.getUsername().isEmpty()) {
+                user.setUsername(userDTO.getUsername());
+            }
+            if (!userDTO.getEmail().isEmpty()) {
+                user.setEmail(userDTO.getEmail());
+            }
+            if (!userDTO.getPhone().isEmpty()) {
+                user.setPhone(userDTO.getPhone());
+            }
+            if (!userDTO.getAddress().isEmpty()) {
+                user.setAddress(userDTO.getAddress());
+            }
 
             // Xử lý ảnh nếu có
             if (avatarFile != null && !avatarFile.isEmpty()) {

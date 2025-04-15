@@ -1,6 +1,6 @@
 package com.example.ProjectAPI.controller;
 
-import com.example.ProjectAPI.service.CartServiceImp;
+import com.example.ProjectAPI.service.impl.CartServiceImp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
