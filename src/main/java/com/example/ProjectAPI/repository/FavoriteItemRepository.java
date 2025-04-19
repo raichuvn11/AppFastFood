@@ -17,4 +17,6 @@ public interface FavoriteItemRepository extends JpaRepository<FavoriteItem, Long
     @Transactional
     @Query("DELETE FROM FavoriteItem f WHERE f.user.id = :userId AND f.menuItem.id = :menuItemId")
     void deleteByUserIdAndMenuItemId(Long userId, Long menuItemId);
+    @Query("SELECT f.user.id FROM FavoriteItem f WHERE f.menuItem.id = :menuItemId")
+    List<Long> findUserFavoriteIdsByMenuItemId(Long menuItemId);
 }
