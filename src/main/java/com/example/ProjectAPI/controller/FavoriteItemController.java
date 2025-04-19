@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/favorites")
 public class FavoriteItemController {
@@ -25,5 +27,11 @@ public class FavoriteItemController {
     public ResponseEntity<Void> removeFavoriteItem(@PathVariable Long userId, @PathVariable Long menuItemId) {
         favoriteItemService.removeFavoriteItem(userId, menuItemId);
         return ResponseEntity.noContent().build();
+    }
+
+    // Lấy danh sách món ăn yêu thích theo userId
+    @GetMapping("/{userId}")
+    public ResponseEntity<?> getFavoriteItems(@PathVariable Long userId) {
+        return favoriteItemService.getFavoriteItems(userId);
     }
 }
