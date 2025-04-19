@@ -29,7 +29,6 @@ public class OrderController {
 
     @PutMapping("/update")
     public ResponseEntity<?> updateOrder(@RequestParam Long orderId, @RequestParam String status, @RequestParam int rating, @RequestParam String review) {
-        //
         User user = orderService.findUserByOrderId(orderId);
         if (user != null && user.getDeviceToken() != null && review.isEmpty()) {
             notificationService.sendPushNotification(user.getDeviceToken(), orderId, status);
