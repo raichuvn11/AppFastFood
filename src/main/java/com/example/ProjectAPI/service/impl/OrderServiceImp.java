@@ -69,9 +69,16 @@ public class OrderServiceImp implements IOrderService {
         if (orderOptional.isPresent()) {
             Order order = orderOptional.get();
             order.setStatus(orderStatus);
-            order.setOrderTime(LocalDate.now());    // thời gian tạo order
             order.setRating(rating);
             order.setReview(review);
+
+            if(orderStatus.equals("delivered")){
+                for(OrderItem item : order.getItems()){
+                    MenuItem menuItem = item.getMenuItem();
+                    int currentSold = menuItem.getSoldQuantity();
+                    menuItem.setSoldQuantity(currentSold + item.getQuantity());
+                }
+            }
             orderRepository.save(order);
             return ResponseEntity.ok(order.getStatus());
         }
