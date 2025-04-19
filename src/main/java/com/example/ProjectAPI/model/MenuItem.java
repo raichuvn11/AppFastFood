@@ -1,5 +1,7 @@
 package com.example.ProjectAPI.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,8 +27,15 @@ public class MenuItem implements Serializable {
 
     private String imgMenuItem;
     @ManyToOne
+    @JsonBackReference
+
     private Category category;
     @ManyToMany(mappedBy = "items")
     private List<Cart> carts;
+
+    @OneToMany(mappedBy = "menuItem")
+    @JsonManagedReference(value = "menuitem-favorites")
+
+    private List<FavoriteItem> favoriteItems;
 }
 

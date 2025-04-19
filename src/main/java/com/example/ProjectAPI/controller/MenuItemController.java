@@ -26,13 +26,28 @@ public class MenuItemController {
     @Autowired
     private CategoryServiceImp categoryServiceImp;
 
+
+    @GetMapping("/all-item")
+    public List<MenuItemDTO> getAllMenuItems() {
+        List<MenuItem> items = MenuItemService.getAllMenuItems();
+        return items.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
     @GetMapping("/list-menu-item")
-    public ResponseEntity<List<MenuItem>> getMenuItemsByCategoryId(@RequestParam("categoryId") int categoryId) {
-        List<MenuItem> MenuItemList = MenuItemService.getMenuItemsByCategoryId(categoryId);
-        if (MenuItemList.isEmpty()) {
+    public ResponseEntity<List<MenuItemDTO>> getMenuItemsByCategoryId(@RequestParam("categoryId") int categoryId) {
+        List<MenuItem> menuItemList = MenuItemService.getMenuItemsByCategoryId(categoryId);
+
+        if (menuItemList.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
-        return ResponseEntity.ok(MenuItemList);
+
+        List<MenuItemDTO> menuItemDTOList = menuItemList.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(menuItemDTOList);
     }
 
     @GetMapping("/top10-bestselling")
@@ -43,29 +58,28 @@ public class MenuItemController {
             return ResponseEntity.noContent().build();
         }
 
-        // Chuyển đổi từ MenuItem sang MenuItemDTO
         List<MenuItemDTO> menuItemDTOList = menuItemList.stream()
                 .map(item -> new MenuItemDTO(
                         item.getId(),
                         item.getName(),
+                        item.getDescription(),
                         item.getPrice(),
                         item.getSoldQuantity(),
                         item.getCreateDate(),
                         item.getImgMenuItem(),
-                        item.getCategory().getId()
+                        item.getCategory().getId(),
+                        getUserFavoriteIds(item)  // Lấy danh sách user yêu thích
                 ))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(menuItemDTOList);
     }
 
-
     @CrossOrigin(origins = "*")
     @GetMapping("/latest-created")
     public ResponseEntity<List<MenuItemDTO>> getLastedCreatedMenuItems() {
         LocalDate daysAgo = LocalDate.now().minusDays(7);
         List<MenuItem> menuItemList = MenuItemService.getTop10LatestCreatedMenuItems(daysAgo);
-        System.out.println(menuItemList);
 
         if (menuItemList.isEmpty()) {
             return ResponseEntity.noContent().build();
@@ -75,11 +89,13 @@ public class MenuItemController {
                 .map(item -> new MenuItemDTO(
                         item.getId(),
                         item.getName(),
+                        item.getDescription(),
                         item.getPrice(),
                         item.getSoldQuantity(),
                         item.getCreateDate(),
                         item.getImgMenuItem(),
-                        item.getCategory().getId()
+                        item.getCategory().getId(),
+                        getUserFavoriteIds(item)  // Lấy danh sách user yêu thích
                 ))
                 .collect(Collectors.toList());
 
@@ -89,7 +105,7 @@ public class MenuItemController {
     @PostMapping("/add-menu-item")
     public ResponseEntity<?> createMenuItem(@RequestParam("name") String name, @RequestParam("price") double price, @RequestParam("categoryId") int categoryId, @RequestParam("imgMenuItem") String imgMenuItem) {
         Optional<Category> category = categoryServiceImp.getCategoryById(categoryId);
-        if(category.isEmpty()) {
+        if (category.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Category không tồn tại");
         }
         MenuItem menuItem = new MenuItem();
@@ -108,5 +124,26 @@ public class MenuItemController {
         response.put("categoryId", menuItem.getCategory().getId());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    private MenuItemDTO convertToDTO(MenuItem item) {
+        return new MenuItemDTO(
+                item.getId(),
+                item.getName(),
+                item.getDescription(),
+                item.getPrice(),
+                item.getSoldQuantity(),
+                item.getCreateDate(),
+                item.getImgMenuItem(),
+                item.getCategory() != null ? item.getCategory().getId() : null,
+                getUserFavoriteIds(item)  // Lấy danh sách user yêu thích
+        );
+    }
+
+    // Hàm giúp lấy danh sách các user yêu thích món ăn
+    private List<Long> getUserFavoriteIds(MenuItem menuItem) {
+        return menuItem.getFavoriteItems().stream()
+                .map(favoriteItem -> favoriteItem.getUser().getId())  // Lấy ID user từ favoriteItem
+                .collect(Collectors.toList());
     }
 }

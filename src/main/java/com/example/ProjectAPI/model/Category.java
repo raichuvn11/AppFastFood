@@ -1,5 +1,6 @@
 package com.example.ProjectAPI.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,6 +25,8 @@ public class Category implements Serializable {
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     @ToString.Exclude
+    @JsonManagedReference
+
     private List<MenuItem> menuItems;
 }
 

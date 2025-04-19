@@ -31,6 +31,11 @@ public class MenuItemServiceImp implements IMenuItemService {
     }
 
     @Override
+    public List<MenuItem> getAllMenuItems() {
+        return menuItemRepository.findAll();
+    }
+
+    @Override
     public <S extends MenuItem> S save(S entity) {
         return menuItemRepository.save(entity);
     }

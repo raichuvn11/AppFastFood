@@ -1,29 +1,40 @@
 package com.example.ProjectAPI.service;
 
 import com.example.ProjectAPI.DTO.UserDTO;
+import com.example.ProjectAPI.Util.JwtUtil;
 import com.example.ProjectAPI.model.OtpVerification;
 import com.example.ProjectAPI.model.User;
 import com.example.ProjectAPI.repository.OtpVerificationRepository;
 import com.example.ProjectAPI.repository.UserRepository;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import javax.xml.bind.SchemaOutputResolver;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+
 
 @Service
 public class UserService {
+
+    private static final String CLIENT_ID = "288243577014-798i3784366217gjfi218kdb53gsurhd.apps.googleusercontent.com";
 
     @Autowired
     private UserRepository userRepository;
@@ -37,121 +48,224 @@ public class UserService {
     @Value("${upload.dir}")
     private String uploadDir;
 
-    // Đăng ký và gửi OTP
+    private final Map<String, String> otpStore = new HashMap<>();
+
+    // Salt cố định
+    private static final String SALT = "SaltAppFastFood057";
+
+    // Mã hóa mật khẩu với SHA-256
+    private String encodePassword(String password) {
+        System.out.println(password);
+        String saltedPassword = password + SALT;
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(saltedPassword.getBytes());
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (Exception e) {
+            throw new RuntimeException("SHA-256 algorithm not found", e);
+        }
+    }
+
+    // So sánh mật khẩu
+    private boolean matches(String rawPassword, String hashedPassword) {
+        System.out.println(encodePassword(rawPassword));
+        System.out.println(hashedPassword);
+        return encodePassword(rawPassword).equals(hashedPassword);
+    }
+
+    // Trả về lỗi
+    private ResponseEntity<?> buildErrorResponse(String message) {
+        return ResponseEntity.ok(Map.of(
+                "status", "error",
+                "message", message
+        ));
+    }
+
+    // Trả về thành công
+    private ResponseEntity<?> buildSuccessResponse(String message, Object data) {
+        return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", message,
+                "data", data != null ? data : new HashMap<>()
+        ));
+    }
+
+
+    // Tạo OTP ngẫu nhiên 6 chữ số
+    private String generateOtp() {
+        return String.valueOf((int) (Math.random() * 900000) + 100000);
+    }
+    //Đăng nhập bằng google
+    public ResponseEntity<?> loginWithGoogle(String idTokenString) {
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier
+                    .Builder(GoogleNetHttpTransport.newTrustedTransport(), JacksonFactory.getDefaultInstance())
+                    .setAudience(Collections.singletonList(CLIENT_ID))
+                    .build();
+
+            GoogleIdToken idToken = verifier.verify(idTokenString);
+
+            if (idToken == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid ID Token");
+            }
+
+            GoogleIdToken.Payload payload = idToken.getPayload();
+            String email = payload.getEmail();
+            String name = (String) payload.get("name");
+            String pictureUrl = (String) payload.get("picture");
+
+            User user = userRepository.findByEmail(email).orElse(null);
+
+            if (user == null) {
+                user = new User();
+                user.setEmail(email);
+                user.setUsername(name);
+                user.setAvatar(pictureUrl);
+                userRepository.save(user); // lưu user mới
+            }
+
+            /*String token = JwtUtil.generateToken(email);
+            user.setDeviceToken(token);
+            userRepository.save(user);*/ // cập nhật lại token (nếu cần)
+
+            return buildSuccessResponse("Login successful!", Map.of(
+                    "userId", user.getId()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
+    // Đăng ký: tạo OTP và gửi qua email
     public ResponseEntity<?> registerUser(String username, String email, String password) {
-        // Kiểm tra xem email đã tồn tại chưa
         if (userRepository.existsByEmail(email)) {
-            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Email already exists!"));
+            return buildErrorResponse("Email already exists!");
         }
 
-        // Tạo OTP
-        String otp = String.valueOf((int) (Math.random() * 900000) + 100000); // 6 chữ số OTP
-        OtpVerification otpVerification = new OtpVerification();
-        otpVerification.setEmail(email);
-        otpVerification.setOtp(otp);
-        otpVerification.setCreatedAt(LocalDateTime.now());
-        otpVerification.setVerified(false);
+        String otp = generateOtp();
+        OtpVerification otpEntity = new OtpVerification(email, otp, LocalDateTime.now(), false);
+        otpVerificationRepository.save(otpEntity);
+
+        emailService.sendOtpEmail(email, otp);
+        return buildSuccessResponse("OTP sent to your email. Please verify.", null);
+    }
+
+
+    // Xác thực OTP và đăng ký user
+    public ResponseEntity<?> verifyOtpAndRegister(String username, String email, String password, String otp) {
+        Optional<OtpVerification> optionalOtp = otpVerificationRepository.findByEmailAndOtp(email, otp);
+
+        if (optionalOtp.isEmpty() || optionalOtp.get().isVerified()) {
+            return buildErrorResponse("Invalid or already used OTP!");
+        }
+
+        OtpVerification otpVerification = optionalOtp.get();
+        if (otpVerification.getCreatedAt().plusMinutes(5).isBefore(LocalDateTime.now())) {
+            return buildErrorResponse("OTP expired!");
+        }
+
+        otpVerification.setVerified(true);
         otpVerificationRepository.save(otpVerification);
 
-        // Gửi OTP qua email
-        emailService.sendOtpEmail(email, otp);
+        // Mã hóa mật khẩu với SHA-256 và salt cố định
+        String encodedPassword = encodePassword(password);
 
-        return ResponseEntity.ok(Map.of("status", "success", "message", "OTP sent to your email. Please verify."));
-    }
-
-    // Xác thực OTP
-    public ResponseEntity<?> verifyOtp(String username, String email, String password, String otp) {
-        // Kiểm tra OTP trong database
-        Optional<OtpVerification> otpVerification = otpVerificationRepository.findByEmailAndOtp(email, otp);
-
-        if (otpVerification.isEmpty() || otpVerification.get().isVerified()) {
-            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Invalid or already used OTP!"));
-        }
-
-        // Kiểm tra thời gian hết hạn của OTP
-        if (otpVerification.get().getCreatedAt().plusMinutes(5).isBefore(LocalDateTime.now())) {
-            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "OTP expired!"));
-        }
-
-        // Đánh dấu OTP là đã được xác thực
-        OtpVerification verifiedOtp = otpVerification.get();
-        verifiedOtp.setVerified(true);
-        otpVerificationRepository.save(verifiedOtp);
-
-        // Lưu người dùng vào hệ thống sau khi xác thực OTP
         User user = new User();
-        user.setUsername(username); // username sẽ được lấy từ một nơi nào đó, ví dụ một yêu cầu khác
+        user.setUsername(username);
         user.setEmail(email);
-        user.setPassword(password); // Nên mã hóa mật khẩu trong thực tế
+        user.setPassword(encodedPassword);  // Lưu mật khẩu đã mã hóa
         userRepository.save(user);
-
-        return ResponseEntity.ok(Map.of("status", "success", "message", "User registered successfully!"));
+        otpStore.remove(email);
+        return buildSuccessResponse("User registered successfully!", null);
     }
 
+    // Đăng nhập
     public ResponseEntity<?> loginUser(String email, String password) {
         Optional<User> userOptional = userRepository.findByEmail(email);
 
         if (userOptional.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "User not found!"));
+            return buildErrorResponse("User not found!");
         }
 
         User user = userOptional.get();
 
-        // Kiểm tra mật khẩu (nên mã hóa mật khẩu trong thực tế)
-        if (!user.getPassword().equals(password)) {
-            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Invalid password!"));
+        if (!matches(password, user.getPassword())) {
+            return buildErrorResponse("Invalid password!");
         }
 
-        // Trả về thông tin người dùng khi đăng nhập thành công
-        return ResponseEntity.ok(Map.of(
-                "status", "success",
-                "message", "Login successful!",
-                "user", Map.of(
-                        "id", user.getId(),
-                        "username", user.getUsername(),
-                        "email", user.getEmail()
-                )
+        // Tạo token
+        /*String token = JwtUtil.generateToken(user.getEmail());
+        user.setDeviceToken(token);
+        userRepository.save(user);*/
+        return buildSuccessResponse("Login successful!", Map.of(
+                "userId", user.getId()
         ));
     }
 
-    private final Map<String, String> otpStore = new HashMap<>(); // Lưu OTP tạm thời
 
-    // Gửi OTP qua email
+    // Gửi OTP đặt lại mật khẩu
     public ResponseEntity<?> sendResetOtp(String email) {
         Optional<User> userOptional = userRepository.findByEmail(email);
-
         if (userOptional.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "User not found!"));
+            return buildErrorResponse("User not found!");
         }
 
-        String otp = String.valueOf((int)(Math.random() * 9000) + 1000); // Tạo OTP 4 chữ số
-        otpStore.put(email, otp);
+        String otp = generateOtp();
+        OtpVerification otpEntity = new OtpVerification(email, otp, LocalDateTime.now(), false);
+        otpVerificationRepository.save(otpEntity);
 
-        // Gửi OTP qua email
         emailService.sendOtpEmail(email, otp);
 
-        return ResponseEntity.ok(Map.of("status", "success", "message", "OTP sent to your email!"));
+        return buildSuccessResponse("OTP sent to your email!", null);
     }
+
+    // Kiểm tra OTP và email khi quên mật khẩu
+    public ResponseEntity<?> checkOtpAndEmailForForgotPassword(String email, String otp) {
+        Optional<OtpVerification> otpVerificationOptional = otpVerificationRepository.findByEmailAndOtp(email, otp);
+
+        if (otpVerificationOptional.isEmpty()) {
+            return buildErrorResponse("Invalid OTP or email mismatch.");
+        }
+
+        OtpVerification otpVerification = otpVerificationOptional.get();
+
+        // Kiểm tra nếu OTP đã hết hạn
+        if (otpVerification.getCreatedAt().plusMinutes(5).isBefore(LocalDateTime.now())) {
+            return buildErrorResponse("OTP expired.");
+        }
+
+        if (otpVerification.isVerified()) {
+            return buildErrorResponse("OTP already used.");
+        }
+
+        return buildSuccessResponse("OTP is valid. You can reset your password.", null);
+    }
+
     // Đặt lại mật khẩu
     public ResponseEntity<?> resetPassword(String email, String otp, String newPassword) {
-        if (!otpStore.containsKey(email) || !otpStore.get(email).equals(otp)) {
-            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Invalid OTP!"));
+        Optional<OtpVerification> optionalOtp = otpVerificationRepository.findByEmailAndOtp(email, otp);
+        System.out.println(email + " " + otp);
+        if (optionalOtp.isEmpty() || optionalOtp.get().isVerified()) {
+
+            return buildErrorResponse("Invalid or already used OTP!");
+        }
+
+        OtpVerification otpVerification = optionalOtp.get();
+        if (otpVerification.getCreatedAt().plusMinutes(5).isBefore(LocalDateTime.now())) {
+            return buildErrorResponse("OTP expired!");
         }
 
         Optional<User> userOptional = userRepository.findByEmail(email);
-
         if (userOptional.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "User not found!"));
+            return buildErrorResponse("User not found!");
         }
 
         User user = userOptional.get();
-        user.setPassword(newPassword); // Nên mã hóa mật khẩu trong thực tế
+        user.setPassword(encodePassword(newPassword));
         userRepository.save(user);
 
-        // Xóa OTP sau khi sử dụng
         otpStore.remove(email);
 
-        return ResponseEntity.ok(Map.of("status", "success", "message", "Password reset successfully!"));
+        return buildSuccessResponse("Password reset successfully!", null);
     }
 
     // get user infomation
@@ -171,6 +285,19 @@ public class UserService {
         else{
             return ResponseEntity.status(404).body("User not found!");
         }
+    }
+
+    // Phương thức cập nhật địa chỉ người dùng
+    public User updateAddress(Long userId, String newAddress) {
+        // Kiểm tra nếu người dùng tồn tại
+        User user = userRepository.findById(userId).orElse(null);
+        newAddress = newAddress.replace("\"", "");
+        if (user != null) {
+            // Cập nhật địa chỉ
+            user.setAddress(newAddress);
+            return userRepository.save(user); // Lưu lại thông tin người dùng
+        }
+        return null; // Trả về null nếu không tìm thấy người dùng
     }
 
     // update user profile

@@ -1,5 +1,6 @@
 package com.example.ProjectAPI.controller;
 
+import com.example.ProjectAPI.DTO.request.*;
 import com.example.ProjectAPI.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -12,38 +13,45 @@ public class AuthController {
     @Autowired
     private UserService userService;
 
-    // API đăng ký và gửi OTP
+
+
+    // Đăng ký và gửi OTP
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestParam String username,
-                                      @RequestParam String email,
-                                      @RequestParam String password) {
-        // Gọi service để xử lý đăng ký và gửi OTP
-        return userService.registerUser(username, email, password);
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+        return userService.registerUser(request.getUsername(), request.getEmail(), request.getPassword());
     }
 
-    // API xác thực OTP
+    // Xác thực OTP
     @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifyOtp(@RequestParam String username,
-                                       @RequestParam String email,
-                                       @RequestParam String password, @RequestParam String otp) {
-        // Gọi service để xử lý xác thực OTP
-        return userService.verifyOtp(username,email,password, otp);
-    }
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestParam String email, @RequestParam String password) {
-        return userService.loginUser(email, password);
-    }
-    // Gửi OTP qua email để quên mật khẩu
-    @PostMapping("/forgot-password")
-    public ResponseEntity<?> sendResetOtp(@RequestParam String email) {
-        return userService.sendResetOtp(email);
+    public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
+        return userService.verifyOtpAndRegister(
+                request.getUsername(), request.getEmail(), request.getPassword(), request.getOtp());
     }
 
-    // Đặt lại mật khẩu bằng OTP
+    @PostMapping("/google")
+    public ResponseEntity<?> loginWithGoogle(@RequestBody GoogleLoginRequest request) {
+        return userService.loginWithGoogle(request.getIdToken());
+    }
+
+    // Đăng nhập
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        return userService.loginUser(request.getEmail(), request.getPassword());
+    }
+
+    // Quên mật khẩu - gửi OTP
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> sendResetOtp(@RequestBody EmailRequest request) {
+        return userService.sendResetOtp(request.getEmail());
+    }
+    //Check OTP reset
+    @PostMapping("/check-otp")
+    public ResponseEntity<?> checkOTPResetPassword(@RequestBody CheckOTPResetPasswordRequest request) {
+        return userService.checkOtpAndEmailForForgotPassword(request.getEmail(), request.getOtp());
+    }
+    // Đặt lại mật khẩu
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestParam String email,
-                                           @RequestParam String otp,
-                                           @RequestParam String newPassword) {
-        return userService.resetPassword(email, otp, newPassword);
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+        return userService.resetPassword(request.getEmail(), request.getOtp(), request.getNewPassword());
     }
 }

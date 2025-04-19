@@ -1,5 +1,8 @@
 package com.example.ProjectAPI.controller;
 
+import com.example.ProjectAPI.DTO.CategoryDTO;
+import com.example.ProjectAPI.DTO.MenuItemDTO;
+import com.example.ProjectAPI.DTO.UserDTO;
 import com.example.ProjectAPI.model.Category;
 import com.example.ProjectAPI.model.CategoryType;
 import com.example.ProjectAPI.service.CategoryServiceImp;
@@ -11,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/cate")
@@ -22,10 +26,40 @@ public class CategoryController {
     @GetMapping()
     public ResponseEntity<?> getAllCategory() {
         List<Category> categoryList = categoryService.getAllCategories();
+
         if (categoryList.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
-        return ResponseEntity.ok(categoryList);
+
+        List<CategoryDTO> categoryDTOList = categoryList.stream().map(category -> {
+            List<MenuItemDTO> menuItemDTOs = category.getMenuItems().stream().map(menuItem -> {
+
+                List<Long> userFavoriteIds = menuItem.getFavoriteItems().stream()
+                        .map(fav -> fav.getUser().getId())
+                        .collect(Collectors.toList());
+
+                return new MenuItemDTO(
+                        menuItem.getId(),
+                        menuItem.getName(),
+                        menuItem.getDescription(),
+                        menuItem.getPrice(),
+                        menuItem.getSoldQuantity(),
+                        menuItem.getCreateDate(),
+                        menuItem.getImgMenuItem(),
+                        category.getId(),
+                        userFavoriteIds
+                );
+            }).collect(Collectors.toList());
+
+            return new CategoryDTO(
+                    category.getId(),
+                    category.getType().toString(),
+                    category.getImgCategory(),
+                    menuItemDTOs
+            );
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(categoryDTOList);
     }
 
     @PostMapping("/add-category")
