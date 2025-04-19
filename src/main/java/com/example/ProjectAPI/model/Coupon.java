@@ -16,14 +16,11 @@ public class Coupon implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    @Column(unique = true)
     private String code;
-
     @Enumerated(EnumType.STRING)
     private DiscountType discountType;
-
     private double discountValue;
-
     private LocalDate expiryDate;
 }
 

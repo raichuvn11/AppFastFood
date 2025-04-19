@@ -3,7 +3,7 @@ package com.example.ProjectAPI.controller;
 import com.example.ProjectAPI.DTO.DeviceTokenDTO;
 import com.example.ProjectAPI.DTO.UserDTO;
 import com.example.ProjectAPI.model.User;
-import com.example.ProjectAPI.service.NotificationService;
+import com.example.ProjectAPI.service.impl.NotificationService;
 import com.example.ProjectAPI.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -26,8 +26,6 @@ public class UserController {
 
     @PutMapping("/update-profile")
     public ResponseEntity<?> updateUserProfile(@ModelAttribute UserDTO userDTO, @RequestPart(value = "file", required = false) MultipartFile file) {
-        System.out.println("User>>>>:"+userDTO);
-        System.out.println("File>>>>:"+file);
         return userService.updateUserProfile(userDTO, file);
     }
 

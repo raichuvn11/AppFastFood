@@ -1,11 +1,11 @@
-package com.example.ProjectAPI.service;
+package com.example.ProjectAPI.service.impl;
 
 import com.example.ProjectAPI.DTO.CartItemDTO;
-import com.example.ProjectAPI.DTO.MenuItemDTO;
 import com.example.ProjectAPI.model.Cart;
 import com.example.ProjectAPI.model.MenuItem;
 import com.example.ProjectAPI.model.User;
 import com.example.ProjectAPI.repository.CartRepository;
+import com.example.ProjectAPI.service.intf.ICartService;
 import com.example.ProjectAPI.repository.MenuItemRepository;
 import com.example.ProjectAPI.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 

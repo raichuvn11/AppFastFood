@@ -1,4 +1,4 @@
-package com.example.ProjectAPI.service;
+package com.example.ProjectAPI.service.intf;
 
 import com.example.ProjectAPI.DTO.CartItemDTO;
 import com.example.ProjectAPI.model.Cart;

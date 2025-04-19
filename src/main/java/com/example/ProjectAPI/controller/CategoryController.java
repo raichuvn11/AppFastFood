@@ -5,7 +5,7 @@ import com.example.ProjectAPI.DTO.MenuItemDTO;
 import com.example.ProjectAPI.DTO.UserDTO;
 import com.example.ProjectAPI.model.Category;
 import com.example.ProjectAPI.model.CategoryType;
-import com.example.ProjectAPI.service.CategoryServiceImp;
+import com.example.ProjectAPI.service.impl.CategoryServiceImp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
