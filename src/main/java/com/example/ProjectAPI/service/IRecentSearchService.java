@@ -11,6 +11,7 @@ public interface IRecentSearchService {
     List<RecentSearch> getRecentSearches(Long userId);
 
     void deleteAllByUser(Long userId);
+
     void deleteSearchByKeywordAndUser(String keyword, Long userId);
 
 }

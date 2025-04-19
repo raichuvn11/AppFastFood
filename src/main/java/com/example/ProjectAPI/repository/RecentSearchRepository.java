@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface RecentSearchRepository extends JpaRepository<RecentSearch, Long> {
 
-    List<RecentSearch> findTop10ByUserIdOrderByCreatedAtDesc(Long userId);
+    List<RecentSearch> findTop5ByUserIdOrderByCreatedAtDesc(Long userId);
 
     void deleteByUserId(Long userId);
 

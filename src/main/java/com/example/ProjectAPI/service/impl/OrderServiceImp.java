@@ -1,15 +1,11 @@
 package com.example.ProjectAPI.service.impl;
 
-import com.example.ProjectAPI.DTO.OrderDTO;
-import com.example.ProjectAPI.DTO.OrderItemDTO;
-import com.example.ProjectAPI.DTO.OrderStatusDTO;
+import com.example.ProjectAPI.DTO.*;
 import com.example.ProjectAPI.model.MenuItem;
 import com.example.ProjectAPI.model.Order;
 import com.example.ProjectAPI.model.OrderItem;
 import com.example.ProjectAPI.model.User;
-import com.example.ProjectAPI.repository.MenuItemRepository;
-import com.example.ProjectAPI.repository.OrderRepository;
-import com.example.ProjectAPI.repository.UserRepository;
+import com.example.ProjectAPI.repository.*;
 import com.example.ProjectAPI.service.intf.IOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class OrderServiceImp implements IOrderService {
@@ -31,6 +26,12 @@ public class OrderServiceImp implements IOrderService {
 
     @Autowired
     private MenuItemRepository menuItemRepository;
+
+    @Autowired
+    private FavoriteItemRepository favoriteItemRepository;
+
+    @Autowired
+    private OrderItemRepository orderItemRepository;
 
     @Override
     public ResponseEntity<?> createOrder(OrderDTO orderDTO) {
@@ -68,9 +69,16 @@ public class OrderServiceImp implements IOrderService {
         if (orderOptional.isPresent()) {
             Order order = orderOptional.get();
             order.setStatus(orderStatus);
-            order.setOrderTime(LocalDate.now());    // thời gian tạo order
             order.setRating(rating);
             order.setReview(review);
+
+            if(orderStatus.equals("delivered")){
+                for(OrderItem item : order.getItems()){
+                    MenuItem menuItem = item.getMenuItem();
+                    int currentSold = menuItem.getSoldQuantity();
+                    menuItem.setSoldQuantity(currentSold + item.getQuantity());
+                }
+            }
             orderRepository.save(order);
             return ResponseEntity.ok(order.getStatus());
         }
@@ -142,4 +150,44 @@ public class OrderServiceImp implements IOrderService {
         return ResponseEntity.ok(orderStatusDTOList);
     }
 
+    public List<MenuItemDTO> getRecentItemsByUserId(Long userId) {
+        // Lấy 3 đơn hàng gần đây của người dùng
+        List<Order> recentOrders = orderRepository.findTop3ByUserIdOrderByOrderTimeDesc(userId);
+
+        // Dùng LinkedHashSet để giữ thứ tự và loại trùng
+        Set<Long> uniqueMenuItemIds = new LinkedHashSet<>();
+
+        // Duyệt qua các đơn hàng và lấy các món ăn
+        for (Order order : recentOrders) {
+            for (OrderItem item : order.getItems()) {
+                uniqueMenuItemIds.add(item.getMenuItem().getId()); // Loại trùng ID
+            }
+        }
+
+        // Danh sách kết quả
+        List<MenuItemDTO> result = new ArrayList<>();
+        for (Long menuItemId : uniqueMenuItemIds) {
+            menuItemRepository.findById(menuItemId).ifPresent(menuItem -> {
+                // Lấy danh sách các người dùng yêu thích món ăn này
+                List<Long> userFavoriteIds = favoriteItemRepository.findUserFavoriteIdsByMenuItemId(menuItemId);
+                // Lấy số lượng món ăn đã bán
+                int soldQuantity = orderItemRepository.countSoldQuantityByMenuItemId(menuItemId);
+
+                // Tạo đối tượng MenuItemDTO
+                result.add(new MenuItemDTO(
+                        menuItem.getId(),
+                        menuItem.getName(),
+                        menuItem.getDescription(),
+                        menuItem.getPrice(),
+                        soldQuantity,
+                        menuItem.getCreateDate(),
+                        menuItem.getImgMenuItem(),
+                        menuItem.getCategory().getId(),
+                        userFavoriteIds
+                ));
+            });
+        }
+
+        return result;
+    }
 }
