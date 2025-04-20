@@ -24,7 +24,7 @@ public class UserController {
         return userService.getUseProfile(userId);
     }
 
-    @PutMapping("/update-profile")
+    @PostMapping("/update-profile")
     public ResponseEntity<?> updateUserProfile(@ModelAttribute UserDTO userDTO, @RequestPart(value = "file", required = false) MultipartFile file) {
         return userService.updateUserProfile(userDTO, file);
     }

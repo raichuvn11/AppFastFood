@@ -91,4 +91,19 @@ public class CartServiceImp implements ICartService {
         return response;
     }
 
+    @Override
+    public ResponseEntity<Boolean> deleteCartItem(int userId, long menuItemId) {
+        Cart cart = cartRepository.findByUserId((long) userId);
+        List<MenuItem> menuItemList = cartRepository.findByCartId(cart.getId());
+        for (MenuItem menuItem : menuItemList) {
+            if (menuItem.getId().equals(menuItemId)) {
+                cart.getItems().remove(menuItem);
+                cartRepository.save(cart);
+                return ResponseEntity.ok(true);
+            }
+        }
+        return ResponseEntity.ok(false);
+    }
+
+
 }

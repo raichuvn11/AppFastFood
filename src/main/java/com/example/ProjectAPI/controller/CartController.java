@@ -56,4 +56,9 @@ public class CartController {
         }
     }
 
+    @DeleteMapping("/delete-item")
+    public ResponseEntity<Boolean> deleteCartItem(@RequestParam long userId, @RequestParam long itemId) {
+        return cartService.deleteCartItem((int)userId, itemId);
+    }
+
 }

@@ -354,7 +354,7 @@ public class UserService {
             }
 
             try {
-                System.out.println("Saving user to repository: " + user);
+                System.out.println("Saving user to repository: " + user.getUsername());
                 userRepository.save(user);
             } catch (Exception e) {
                 System.err.println("Error saving to repository: " + e.getMessage());
