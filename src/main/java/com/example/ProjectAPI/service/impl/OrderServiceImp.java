@@ -108,6 +108,8 @@ public class OrderServiceImp implements IOrderService {
 
             OrderDTO orderDTO = new OrderDTO();
             orderDTO.setUserId(order.getUser().getId());
+            orderDTO.setUserName(order.getUser().getUsername());
+            orderDTO.setUserPhone(order.getUser().getPhone());
             orderDTO.setOrderAddress(order.getOrderAddress());
             orderDTO.setOrderTime(DateTimeFormatter.ofPattern("dd-MM-yyyy").format(order.getOrderTime()));
             orderDTO.setOrderStatus(order.getStatus());
