@@ -31,7 +31,7 @@ public class OrderController {
     public ResponseEntity<?> updateOrder(@RequestParam Long orderId, @RequestParam String status, @RequestParam int rating, @RequestParam String review) {
         User user = orderService.findUserByOrderId(orderId);
         if (user != null && user.getDeviceToken() != null && review.isEmpty()) {
-            notificationService.sendPushNotification(user.getDeviceToken(), orderId, status);
+            notificationService.sendOrderStatusNotification(user.getDeviceToken(), orderId, status);
         }
         return orderService.updateOrder(orderId, status, rating, review);
     }
