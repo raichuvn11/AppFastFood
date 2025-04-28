@@ -3,11 +3,9 @@ package com.example.ProjectAPI.service.impl;
 import com.example.ProjectAPI.DTO.OrderDTO;
 import com.example.ProjectAPI.DTO.OrderItemDTO;
 import com.example.ProjectAPI.DTO.OrderStatusDTO;
-import com.example.ProjectAPI.model.MenuItem;
-import com.example.ProjectAPI.model.Order;
-import com.example.ProjectAPI.model.OrderItem;
-import com.example.ProjectAPI.model.User;
+import com.example.ProjectAPI.model.*;
 import com.example.ProjectAPI.repository.MenuItemRepository;
+import com.example.ProjectAPI.repository.OrderDetailRepository;
 import com.example.ProjectAPI.repository.OrderRepository;
 import com.example.ProjectAPI.repository.UserRepository;
 import com.example.ProjectAPI.service.intf.IOrderService;
@@ -17,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,6 +30,9 @@ public class OrderServiceImp implements IOrderService {
 
     @Autowired
     private MenuItemRepository menuItemRepository;
+
+    @Autowired
+    private OrderDetailRepository orderDetailRepository;
 
     @Override
     public ResponseEntity<?> createOrder(OrderDTO orderDTO) {
@@ -57,6 +59,8 @@ public class OrderServiceImp implements IOrderService {
             order.setOrderTotal(orderDTO.getOrderTotal());
             order.setOrderTime(LocalDate.now());
             orderRepository.save(order);
+
+            saveOrderDetail(order); // lưu thông tin chi tiết hóa đơn
             return ResponseEntity.ok(order.getId());
         }
         return ResponseEntity.status(400).body("Không thể tạo order!");
@@ -79,6 +83,8 @@ public class OrderServiceImp implements IOrderService {
                 }
             }
             orderRepository.save(order);
+
+            updateOrderDetail(order);
             return ResponseEntity.ok(order.getStatus());
         }
         return ResponseEntity.status(400).body("Không thể update order!");
@@ -151,4 +157,44 @@ public class OrderServiceImp implements IOrderService {
         return ResponseEntity.ok(orderStatusDTOList);
     }
 
+    private void saveOrderDetail(Order order){
+        OrderDetail orderDetail = new OrderDetail();
+
+        orderDetail.setOrderDetailId(order.getId());
+        orderDetail.setUserName(order.getUser().getUsername());
+        orderDetail.setUserPhone(order.getUser().getPhone());
+        orderDetail.setOrderAddress(order.getOrderAddress());
+        orderDetail.setOrderTime(order.getOrderTime());
+        orderDetail.setStatus(order.getStatus());
+        orderDetail.setRating(order.getRating());
+        orderDetail.setReview(order.getReview());
+        orderDetail.setOrderTotal(order.getOrderTotal());
+
+        double amount = 0;
+        List<OrderItemDetail> orderItemDetails = new ArrayList<>();
+        for(OrderItem item : order.getItems()){
+            OrderItemDetail orderItemDetail = new OrderItemDetail();
+
+            orderItemDetail.setItemId(item.getId());
+            orderItemDetail.setItemName(item.getMenuItem().getName());
+            orderItemDetail.setItemPrice(item.getMenuItem().getPrice());
+            orderItemDetail.setQuantity(item.getQuantity());
+            orderItemDetail.setItemAmount(orderItemDetail.getQuantity() * orderItemDetail.getItemPrice());
+            orderItemDetail.setOrderDetail(orderDetail);
+            amount += orderItemDetail.getItemAmount();
+            orderItemDetails.add(orderItemDetail);
+        }
+        orderDetail.setOrderAmount(amount);
+        orderDetail.setItemDetails(orderItemDetails);
+        orderDetailRepository.save(orderDetail);
+    }
+
+    private void updateOrderDetail(Order order){
+        OrderDetail orderDetail = orderDetailRepository.findByOrderDetailId(order.getId());
+
+        orderDetail.setStatus(order.getStatus());
+        orderDetail.setRating(order.getRating());
+        orderDetail.setReview(order.getReview());
+        orderDetailRepository.save(orderDetail);
+    }
 }

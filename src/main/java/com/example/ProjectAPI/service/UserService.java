@@ -333,16 +333,13 @@ public class UserService {
                         System.out.println("Created directory: " + uploadPath);
                     }
 
-                    // Đặt tên file ngẫu nhiên để tránh trùng lặp
                     String fileName = UUID.randomUUID() + "_" + avatarFile.getOriginalFilename();
                     Path filePath = uploadPath.resolve(fileName);
 
                     // Lưu file vào thư mục project
                     avatarFile.transferTo(filePath.toFile());
                     System.out.println("Saved file to: " + filePath);
-
-                    // Cập nhật đường dẫn avatar (cho phép truy cập từ client)
-                    String avatarPath = "/uploads/avatar/" + fileName;
+                    String avatarPath = "uploads/avatar/" + fileName;
                     user.setAvatar(avatarPath);
                     System.out.println("Avatar path set: " + user.getAvatar());
                 } catch (IOException e) {
