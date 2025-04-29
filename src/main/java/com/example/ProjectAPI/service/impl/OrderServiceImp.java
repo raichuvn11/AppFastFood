@@ -141,7 +141,7 @@ public class OrderServiceImp implements IOrderService {
 
     @Override
     public ResponseEntity<?> getOrdersByStatus(String status, Long userId) {
-        List<Order> orderList = orderRepository.findByStatusAndUserIdOrderByOrderTimeDesc(status, userId);
+        List<Order> orderList = orderRepository.findByStatusAndUserIdOrderByIdDesc(status, userId);
         if (orderList.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
