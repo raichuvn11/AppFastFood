@@ -108,14 +108,13 @@ public class OrderServiceImp implements IOrderService {
 
     @Override
     public ResponseEntity<?> getOrderByOrderId(Long orderId) {
-        Optional<Order> orderOptional = orderRepository.findById(orderId);
+        Optional<OrderDetail> orderOptional = orderDetailRepository.findById(orderId);
         if (orderOptional.isPresent()) {
-            Order order = orderOptional.get();
+            OrderDetail order = orderOptional.get();
 
             OrderDTO orderDTO = new OrderDTO();
-            orderDTO.setUserId(order.getUser().getId());
-            orderDTO.setUserName(order.getUser().getUsername());
-            orderDTO.setUserPhone(order.getUser().getPhone());
+            orderDTO.setUserName(order.getUserName());
+            orderDTO.setUserPhone(order.getUserPhone());
             orderDTO.setOrderAddress(order.getOrderAddress());
             orderDTO.setOrderTime(DateTimeFormatter.ofPattern("dd-MM-yyyy").format(order.getOrderTime()));
             orderDTO.setOrderStatus(order.getStatus());
@@ -123,13 +122,13 @@ public class OrderServiceImp implements IOrderService {
             orderDTO.setRating(order.getRating());
             orderDTO.setReview(order.getReview());
 
-            List<OrderItemDTO> orderItemDTOList = order.getItems().stream().map(orderItem -> {
+            List<OrderItemDTO> orderItemDTOList = order.getItemDetails().stream().map(orderItem -> {
                 OrderItemDTO orderItemDTO = new OrderItemDTO();
                 orderItemDTO.setQuantity(orderItem.getQuantity());
-                orderItemDTO.setItemId(orderItem.getMenuItem().getId());
-                orderItemDTO.setName(orderItem.getMenuItem().getName());
-                orderItemDTO.setPrice(orderItem.getMenuItem().getPrice());
-                orderItemDTO.setImg(orderItem.getMenuItem().getImgMenuItem());
+                orderItemDTO.setItemId(orderItem.getItemId());
+                orderItemDTO.setName(orderItem.getItemName());
+                orderItemDTO.setPrice(orderItem.getItemPrice());
+                orderItemDTO.setImg(orderItem.getItemImg());
                 return orderItemDTO;
             }).toList();
             orderDTO.setOrderItemDTOS(orderItemDTOList);
@@ -176,6 +175,7 @@ public class OrderServiceImp implements IOrderService {
             OrderItemDetail orderItemDetail = new OrderItemDetail();
 
             orderItemDetail.setItemId(item.getId());
+            orderItemDetail.setItemImg(item.getMenuItem().getImgMenuItem());
             orderItemDetail.setItemName(item.getMenuItem().getName());
             orderItemDetail.setItemPrice(item.getMenuItem().getPrice());
             orderItemDetail.setQuantity(item.getQuantity());

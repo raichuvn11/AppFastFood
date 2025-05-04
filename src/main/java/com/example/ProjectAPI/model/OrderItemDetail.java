@@ -18,6 +18,7 @@ public class OrderItemDetail {
     private int quantity;
     private double itemPrice;
     private double itemAmount;
+    private String itemImg;
     @ManyToOne
     private OrderDetail orderDetail;
 }
