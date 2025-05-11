@@ -124,9 +124,6 @@ public class UserService {
                 userRepository.save(user); // lưu user mới
             }
 
-            /*String token = JwtUtil.generateToken(email);
-            user.setDeviceToken(token);
-            userRepository.save(user);*/ // cập nhật lại token (nếu cần)
 
             return buildSuccessResponse("Login successful!", Map.of(
                     "userId", user.getId()
@@ -192,10 +189,6 @@ public class UserService {
             return buildErrorResponse("Invalid password!");
         }
 
-        // Tạo token
-        /*String token = JwtUtil.generateToken(user.getEmail());
-        user.setDeviceToken(token);
-        userRepository.save(user);*/
         return buildSuccessResponse("Login successful!", Map.of(
                 "userId", user.getId()
         ));

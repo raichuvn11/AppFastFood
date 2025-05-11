@@ -1,13 +1,11 @@
 package com.example.ProjectAPI.service.impl;
 
+import com.example.ProjectAPI.DTO.MenuItemDTO;
 import com.example.ProjectAPI.DTO.OrderDTO;
 import com.example.ProjectAPI.DTO.OrderItemDTO;
 import com.example.ProjectAPI.DTO.OrderStatusDTO;
 import com.example.ProjectAPI.model.*;
-import com.example.ProjectAPI.repository.MenuItemRepository;
-import com.example.ProjectAPI.repository.OrderDetailRepository;
-import com.example.ProjectAPI.repository.OrderRepository;
-import com.example.ProjectAPI.repository.UserRepository;
+import com.example.ProjectAPI.repository.*;
 import com.example.ProjectAPI.service.intf.IOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,9 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class OrderServiceImp implements IOrderService {
@@ -33,6 +29,12 @@ public class OrderServiceImp implements IOrderService {
 
     @Autowired
     private OrderDetailRepository orderDetailRepository;
+
+    @Autowired
+    private FavoriteItemRepository favoriteItemRepository;
+
+    @Autowired
+    private OrderItemRepository orderItemRepository;
 
     @Override
     public ResponseEntity<?> createOrder(OrderDTO orderDTO) {
@@ -75,8 +77,8 @@ public class OrderServiceImp implements IOrderService {
             order.setRating(rating);
             order.setReview(review);
 
-            if(orderStatus.equals("delivered")){
-                for(OrderItem item : order.getItems()){
+            if (orderStatus.equals("delivered")) {
+                for (OrderItem item : order.getItems()) {
                     MenuItem menuItem = item.getMenuItem();
                     int currentSold = menuItem.getSoldQuantity();
                     menuItem.setSoldQuantity(currentSold + item.getQuantity());
@@ -156,7 +158,7 @@ public class OrderServiceImp implements IOrderService {
         return ResponseEntity.ok(orderStatusDTOList);
     }
 
-    private void saveOrderDetail(Order order){
+    private void saveOrderDetail(Order order) {
         OrderDetail orderDetail = new OrderDetail();
 
         orderDetail.setOrderDetailId(order.getId());
@@ -171,7 +173,7 @@ public class OrderServiceImp implements IOrderService {
 
         double amount = 0;
         List<OrderItemDetail> orderItemDetails = new ArrayList<>();
-        for(OrderItem item : order.getItems()){
+        for (OrderItem item : order.getItems()) {
             OrderItemDetail orderItemDetail = new OrderItemDetail();
 
             orderItemDetail.setItemId(item.getId());
@@ -189,12 +191,53 @@ public class OrderServiceImp implements IOrderService {
         orderDetailRepository.save(orderDetail);
     }
 
-    private void updateOrderDetail(Order order){
+    private void updateOrderDetail(Order order) {
         OrderDetail orderDetail = orderDetailRepository.findByOrderDetailId(order.getId());
 
         orderDetail.setStatus(order.getStatus());
         orderDetail.setRating(order.getRating());
         orderDetail.setReview(order.getReview());
         orderDetailRepository.save(orderDetail);
+    }
+
+    public List<MenuItemDTO> getRecentItemsByUserId(Long userId) {
+        // Lấy 3 đơn hàng gần đây của người dùng
+        List<Order> recentOrders = orderRepository.findTop3ByUserIdOrderByOrderTimeDesc(userId);
+
+        // Dùng LinkedHashSet để giữ thứ tự và loại trùng
+        Set<Long> uniqueMenuItemIds = new LinkedHashSet<>();
+
+        // Duyệt qua các đơn hàng và lấy các món ăn
+        for (Order order : recentOrders) {
+            for (OrderItem item : order.getItems()) {
+                uniqueMenuItemIds.add(item.getMenuItem().getId()); // Loại trùng ID
+            }
+        }
+
+        // Danh sách kết quả
+        List<MenuItemDTO> result = new ArrayList<>();
+        for (Long menuItemId : uniqueMenuItemIds) {
+            menuItemRepository.findById(menuItemId).ifPresent(menuItem -> {
+                // Lấy danh sách các người dùng yêu thích món ăn này
+                List<Long> userFavoriteIds = favoriteItemRepository.findUserFavoriteIdsByMenuItemId(menuItemId);
+                // Lấy số lượng món ăn đã bán
+                int soldQuantity = orderItemRepository.countSoldQuantityByMenuItemId(menuItemId);
+
+                // Tạo đối tượng MenuItemDTO
+                result.add(new MenuItemDTO(
+                        menuItem.getId(),
+                        menuItem.getName(),
+                        menuItem.getDescription(),
+                        menuItem.getPrice(),
+                        soldQuantity,
+                        menuItem.getCreateDate(),
+                        menuItem.getImgMenuItem(),
+                        menuItem.getCategory().getId(),
+                        userFavoriteIds
+                ));
+            });
+        }
+
+        return result;
     }
 }
