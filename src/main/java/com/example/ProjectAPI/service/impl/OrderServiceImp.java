@@ -83,6 +83,8 @@ public class OrderServiceImp implements IOrderService {
                     int currentSold = menuItem.getSoldQuantity();
                     menuItem.setSoldQuantity(currentSold + item.getQuantity());
                 }
+            }else if(orderStatus.equals("confirmed") && order.getPayment()!=null){
+                order.getPayment().setStatus("checked-out");
             }
             orderRepository.save(order);
 
