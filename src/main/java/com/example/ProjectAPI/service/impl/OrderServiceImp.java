@@ -4,10 +4,7 @@ import com.example.ProjectAPI.DTO.OrderDTO;
 import com.example.ProjectAPI.DTO.OrderItemDTO;
 import com.example.ProjectAPI.DTO.OrderStatusDTO;
 import com.example.ProjectAPI.model.*;
-import com.example.ProjectAPI.repository.MenuItemRepository;
-import com.example.ProjectAPI.repository.OrderDetailRepository;
-import com.example.ProjectAPI.repository.OrderRepository;
-import com.example.ProjectAPI.repository.UserRepository;
+import com.example.ProjectAPI.repository.*;
 import com.example.ProjectAPI.service.intf.IOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +30,9 @@ public class OrderServiceImp implements IOrderService {
 
     @Autowired
     private OrderDetailRepository orderDetailRepository;
+
+    @Autowired
+    private PaymentRepository paymentRepository;
 
     @Override
     public ResponseEntity<?> createOrder(OrderDTO orderDTO) {
@@ -81,7 +81,10 @@ public class OrderServiceImp implements IOrderService {
                     int currentSold = menuItem.getSoldQuantity();
                     menuItem.setSoldQuantity(currentSold + item.getQuantity());
                 }
+            } else if(orderStatus.equals("confirmed") && order.getPayment()!=null){
+                order.getPayment().setStatus("checked-out");
             }
+
             orderRepository.save(order);
 
             updateOrderDetail(order);
