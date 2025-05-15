@@ -14,6 +14,8 @@ import java.util.List;
 @ToString
 public class OrderDTO {
     private Long userId;
+    private String userName;
+    private String userPhone;
     private String orderAddress;
     private String orderTime;
     private String orderStatus;

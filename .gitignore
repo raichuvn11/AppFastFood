@@ -34,5 +34,5 @@ build/
 
 ### Google services
 src/main/resources/google-services.json
-
+src/main/resources/application.properties
 

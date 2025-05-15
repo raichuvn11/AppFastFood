@@ -13,7 +13,7 @@ public class WebConfig implements WebMvcConfigurer {
         // Đường dẫn thư mục lưu ảnh bên trong project
         String uploadDir = Paths.get("uploads/avatar").toAbsolutePath().toString();
 
-        registry.addResourceHandler("/uploads/avatar/**")
+        registry.addResourceHandler("uploads/avatar/**")
                 .addResourceLocations("file:" + uploadDir + "/"); // Quan trọng: phải có "file:"
     }
 }

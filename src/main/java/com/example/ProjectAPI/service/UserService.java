@@ -124,9 +124,6 @@ public class UserService {
                 userRepository.save(user); // lưu user mới
             }
 
-            /*String token = JwtUtil.generateToken(email);
-            user.setDeviceToken(token);
-            userRepository.save(user);*/ // cập nhật lại token (nếu cần)
 
             return buildSuccessResponse("Login successful!", Map.of(
                     "userId", user.getId()
@@ -192,10 +189,6 @@ public class UserService {
             return buildErrorResponse("Invalid password!");
         }
 
-        // Tạo token
-        /*String token = JwtUtil.generateToken(user.getEmail());
-        user.setDeviceToken(token);
-        userRepository.save(user);*/
         return buildSuccessResponse("Login successful!", Map.of(
                 "userId", user.getId()
         ));
@@ -333,16 +326,13 @@ public class UserService {
                         System.out.println("Created directory: " + uploadPath);
                     }
 
-                    // Đặt tên file ngẫu nhiên để tránh trùng lặp
                     String fileName = UUID.randomUUID() + "_" + avatarFile.getOriginalFilename();
                     Path filePath = uploadPath.resolve(fileName);
 
                     // Lưu file vào thư mục project
                     avatarFile.transferTo(filePath.toFile());
                     System.out.println("Saved file to: " + filePath);
-
-                    // Cập nhật đường dẫn avatar (cho phép truy cập từ client)
-                    String avatarPath = "/uploads/avatar/" + fileName;
+                    String avatarPath = "uploads/avatar/" + fileName;
                     user.setAvatar(avatarPath);
                     System.out.println("Avatar path set: " + user.getAvatar());
                 } catch (IOException e) {
@@ -354,7 +344,7 @@ public class UserService {
             }
 
             try {
-                System.out.println("Saving user to repository: " + user);
+                System.out.println("Saving user to repository: " + user.getUsername());
                 userRepository.save(user);
             } catch (Exception e) {
                 System.err.println("Error saving to repository: " + e.getMessage());

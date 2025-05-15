@@ -1,5 +1,11 @@
 package com.example.ProjectAPI.service.impl;
 
+
+import com.example.ProjectAPI.DTO.MenuItemDTO;
+import com.example.ProjectAPI.DTO.OrderDTO;
+import com.example.ProjectAPI.DTO.OrderItemDTO;
+import com.example.ProjectAPI.DTO.OrderStatusDTO;
+import com.example.ProjectAPI.model.*;
 import com.example.ProjectAPI.DTO.*;
 import com.example.ProjectAPI.model.MenuItem;
 import com.example.ProjectAPI.model.Order;
@@ -26,6 +32,9 @@ public class OrderServiceImp implements IOrderService {
 
     @Autowired
     private MenuItemRepository menuItemRepository;
+
+    @Autowired
+    private OrderDetailRepository orderDetailRepository;
 
     @Autowired
     private FavoriteItemRepository favoriteItemRepository;
@@ -58,6 +67,8 @@ public class OrderServiceImp implements IOrderService {
             order.setOrderTotal(orderDTO.getOrderTotal());
             order.setOrderTime(LocalDate.now());
             orderRepository.save(order);
+
+            saveOrderDetail(order); // lưu thông tin chi tiết hóa đơn
             return ResponseEntity.ok(order.getId());
         }
         return ResponseEntity.status(400).body("Không thể tạo order!");
@@ -72,14 +83,18 @@ public class OrderServiceImp implements IOrderService {
             order.setRating(rating);
             order.setReview(review);
 
-            if(orderStatus.equals("delivered")){
-                for(OrderItem item : order.getItems()){
+            if (orderStatus.equals("delivered")) {
+                for (OrderItem item : order.getItems()) {
                     MenuItem menuItem = item.getMenuItem();
                     int currentSold = menuItem.getSoldQuantity();
                     menuItem.setSoldQuantity(currentSold + item.getQuantity());
                 }
+            }else if(orderStatus.equals("confirmed") && order.getPayment()!=null){
+                order.getPayment().setStatus("checked-out");
             }
             orderRepository.save(order);
+
+            updateOrderDetail(order);
             return ResponseEntity.ok(order.getStatus());
         }
         return ResponseEntity.status(400).body("Không thể update order!");
@@ -103,12 +118,13 @@ public class OrderServiceImp implements IOrderService {
 
     @Override
     public ResponseEntity<?> getOrderByOrderId(Long orderId) {
-        Optional<Order> orderOptional = orderRepository.findById(orderId);
+        Optional<OrderDetail> orderOptional = orderDetailRepository.findById(orderId);
         if (orderOptional.isPresent()) {
-            Order order = orderOptional.get();
+            OrderDetail order = orderOptional.get();
 
             OrderDTO orderDTO = new OrderDTO();
-            orderDTO.setUserId(order.getUser().getId());
+            orderDTO.setUserName(order.getUserName());
+            orderDTO.setUserPhone(order.getUserPhone());
             orderDTO.setOrderAddress(order.getOrderAddress());
             orderDTO.setOrderTime(DateTimeFormatter.ofPattern("dd-MM-yyyy").format(order.getOrderTime()));
             orderDTO.setOrderStatus(order.getStatus());
@@ -116,13 +132,13 @@ public class OrderServiceImp implements IOrderService {
             orderDTO.setRating(order.getRating());
             orderDTO.setReview(order.getReview());
 
-            List<OrderItemDTO> orderItemDTOList = order.getItems().stream().map(orderItem -> {
+            List<OrderItemDTO> orderItemDTOList = order.getItemDetails().stream().map(orderItem -> {
                 OrderItemDTO orderItemDTO = new OrderItemDTO();
                 orderItemDTO.setQuantity(orderItem.getQuantity());
-                orderItemDTO.setItemId(orderItem.getMenuItem().getId());
-                orderItemDTO.setName(orderItem.getMenuItem().getName());
-                orderItemDTO.setPrice(orderItem.getMenuItem().getPrice());
-                orderItemDTO.setImg(orderItem.getMenuItem().getImgMenuItem());
+                orderItemDTO.setItemId(orderItem.getItemId());
+                orderItemDTO.setName(orderItem.getItemName());
+                orderItemDTO.setPrice(orderItem.getItemPrice());
+                orderItemDTO.setImg(orderItem.getItemImg());
                 return orderItemDTO;
             }).toList();
             orderDTO.setOrderItemDTOS(orderItemDTOList);
@@ -134,7 +150,7 @@ public class OrderServiceImp implements IOrderService {
 
     @Override
     public ResponseEntity<?> getOrdersByStatus(String status, Long userId) {
-        List<Order> orderList = orderRepository.findByStatusAndUserIdOrderByOrderTimeDesc(status, userId);
+        List<Order> orderList = orderRepository.findByStatusAndUserIdOrderByIdDesc(status, userId);
         if (orderList.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -148,6 +164,48 @@ public class OrderServiceImp implements IOrderService {
         }).toList();
 
         return ResponseEntity.ok(orderStatusDTOList);
+    }
+
+    private void saveOrderDetail(Order order) {
+        OrderDetail orderDetail = new OrderDetail();
+
+        orderDetail.setOrderDetailId(order.getId());
+        orderDetail.setUserName(order.getUser().getUsername());
+        orderDetail.setUserPhone(order.getUser().getPhone());
+        orderDetail.setOrderAddress(order.getOrderAddress());
+        orderDetail.setOrderTime(order.getOrderTime());
+        orderDetail.setStatus(order.getStatus());
+        orderDetail.setRating(order.getRating());
+        orderDetail.setReview(order.getReview());
+        orderDetail.setOrderTotal(order.getOrderTotal());
+
+        double amount = 0;
+        List<OrderItemDetail> orderItemDetails = new ArrayList<>();
+        for (OrderItem item : order.getItems()) {
+            OrderItemDetail orderItemDetail = new OrderItemDetail();
+
+            orderItemDetail.setItemId(item.getId());
+            orderItemDetail.setItemImg(item.getMenuItem().getImgMenuItem());
+            orderItemDetail.setItemName(item.getMenuItem().getName());
+            orderItemDetail.setItemPrice(item.getMenuItem().getPrice());
+            orderItemDetail.setQuantity(item.getQuantity());
+            orderItemDetail.setItemAmount(orderItemDetail.getQuantity() * orderItemDetail.getItemPrice());
+            orderItemDetail.setOrderDetail(orderDetail);
+            amount += orderItemDetail.getItemAmount();
+            orderItemDetails.add(orderItemDetail);
+        }
+        orderDetail.setOrderAmount(amount);
+        orderDetail.setItemDetails(orderItemDetails);
+        orderDetailRepository.save(orderDetail);
+    }
+
+    private void updateOrderDetail(Order order) {
+        OrderDetail orderDetail = orderDetailRepository.findByOrderDetailId(order.getId());
+
+        orderDetail.setStatus(order.getStatus());
+        orderDetail.setRating(order.getRating());
+        orderDetail.setReview(order.getReview());
+        orderDetailRepository.save(orderDetail);
     }
 
     public List<MenuItemDTO> getRecentItemsByUserId(Long userId) {
@@ -191,3 +249,4 @@ public class OrderServiceImp implements IOrderService {
         return result;
     }
 }
+

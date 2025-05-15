@@ -12,7 +12,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT o.user FROM Order o WHERE o.id = :orderId")
     User findUserByOrderId(@Param("orderId") Long orderId);
 
+    List<Order> findByStatusAndUserIdOrderByIdDesc(String status, Long userId);
     List<Order> findByStatusAndUserIdOrderByOrderTimeDesc(String status, Long userId);
-
     List<Order> findTop3ByUserIdOrderByOrderTimeDesc(Long userId);
 }

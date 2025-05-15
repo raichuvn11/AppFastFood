@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface ICartService {
-    public ResponseEntity<?> getCartItems(int userId);
+    ResponseEntity<?> getCartItems(int userId);
     Map<String, Object> addToCart(Long userId, Long menuItemId);
+    ResponseEntity<Boolean> deleteCartItem(int userId, long menuItemId);
 }
