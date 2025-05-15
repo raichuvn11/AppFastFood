@@ -2,6 +2,7 @@ package com.example.ProjectAPI.service;
 
 import com.example.ProjectAPI.model.RecentSearch;
 import com.example.ProjectAPI.repository.RecentSearchRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -36,7 +37,7 @@ public class RecentSearchService implements IRecentSearchService {
 
     @Override
     public List<RecentSearch> getRecentSearches(Long userId) {
-        return repository.findTop10ByUserIdOrderByCreatedAtDesc(userId);
+        return repository.findTop5ByUserIdOrderByCreatedAtDesc(userId);
     }
 
     @Override
@@ -45,6 +46,7 @@ public class RecentSearchService implements IRecentSearchService {
     }
 
     @Override
+    @Transactional
     public void deleteSearchByKeywordAndUser(String keyword, Long userId) {
         repository.deleteByKeywordAndUserId(keyword, userId);
     }
