@@ -41,6 +41,7 @@ public class RecentSearchService implements IRecentSearchService {
     }
 
     @Override
+    @Transactional
     public void deleteAllByUser(Long userId) {
         repository.deleteByUserId(userId);
     }
