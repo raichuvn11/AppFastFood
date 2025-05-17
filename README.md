@@ -60,5 +60,42 @@
 - **IDE**: IntelliJ IDEA
 
 ---
+## 📦 Hướng dẫn cài đặt (Local Development)
 
+### 🧾 1. Clone dự án
 
+```bash
+git clone https://github.com/raichuvn11/AppFastFood
+```
+### 🛠 2. Tạo cơ sở dữ liệu MySQL
+Sử dụng MySQL Workbench để khôi phục cơ sở dữ liệu từ file [db_fastfood.sql](https://github.com/raichuvn11/AppFastFood/blob/main/db_fastfood.sql) có sẵn trong thư mục dự án trên GitHub.
+Các bước thực hiện:
+- **Mở MySQL Workbench và kết nối với server MySQL của bạn.**
+
+- **Tạo một cơ sở dữ liệu mới (ví dụ tên là db_fastfood)**
+
+- **Vào menu: Server → Data Import**
+
+- **Chọn `Import from Self-Contained File` và chọn đường dẫn đến file `db_fastfood.sql`**
+
+- **Chọn Default Schema là tên cơ sở dữ liệu vừa tạo (ví dụ tên là db_fastfood) và bấm `Start Import`**
+
+### ⚙️ 3. Cấu hình tệp application.properties
+```properties
+# Database
+spring.datasource.url=jdbc:mysql://localhost:3306/db_fastfood
+spring.datasource.username=root
+spring.datasource.password=yourpassword
+```
+### 🧪 4. Mở và chạy trong IntelliJ IDEA(hoặc IDE khác nếu có thể)
+### 🌐 5. Truy cập Swagger UI để dùng API
+```
+http://localhost:8080/swagger-ui/index.html
+```
+---
+## 👥 Thành viên thực hiện
+
+- **Nguyễn Mạnh Tú**
+- **Hà Đức Phát**
+  
+*Đội ngũ đã phối hợp chặt chẽ để hoàn thiện hệ thống OmniFoodAPI, đảm bảo tính năng ổn định và hiệu quả.*
